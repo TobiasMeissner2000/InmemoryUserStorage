@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <h1>Welcome!</h1>
+    </head>
+    <body>
+        <span style="white-space: pre;">
+        {{.Welcome}}
+
+        <h3>Add user</h3>
+        post-request
+
+        Add user:
+        /add
+    
+        body:
+        {
+            "FirstName": "Max",
+            "LastName":  "Mustermann",
+            "Age":       18
+        }
+    
+        response:
+        {"Id":1001,"FirstName":"Max","LastName":"Mustermann","Age":18}
+
+        The id is set austomaticly     
+
+        <h3>Get user</h3>
+        delete-request
+
+        Get user by id:
+        /get?id={id}
+
+        <h3>Get all user</h3>
+        get-request
+
+        /getall?id={id}
+
+        respose:
+        {"Id":1001,"FirstName":"Max","LastName":"Musetmann","Age":18}
+
+
+        <h3>Delete user</h3>
+        get-request
+
+        Delete user by id:
+        /delete?id={id}
+
+        response:
+        {"1001":{"Id":1001,"FirstName":"Max","LastName":"Musetmann","Age":18},
+        "1002":{"Id":1002,"FirstName":"Max","LastName":"Musetmann","Age":18},
+        "1003":{"Id":1003,"FirstName":"Max","LastName":"Musetmann","Age":18}}
+
+        </span>
+    </body>
+</html>
