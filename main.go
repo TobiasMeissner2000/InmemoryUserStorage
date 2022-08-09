@@ -18,9 +18,9 @@ var (
 )
 
 func main() {
-	fmt.Println("...Server is starting")
+	fmt.Println("...Start server")
+	fmt.Printf("Port : %s \n", port)
 	handlerequests()
-	fmt.Println("-- Server is ready --")
 }
 
 func handlerequests() {
@@ -65,8 +65,15 @@ func AddUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	u := new(user.User)
-	json.NewDecoder(req.Body).Decode(u)
-	req.Body.Close()
+	err := json.NewDecoder(req.Body).Decode(u)
+
+	if err != nil {
+		fmt.Printf("Decode failed with err %s \n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	_ = req.Body.Close()
 	u.SetId()
 	userStorage[u.Id] = *u
 
@@ -74,7 +81,7 @@ func AddUser(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	jsonResp, err := json.Marshal(u)
+	jsonResp, err := json.MarshalIndent(u, "", "\t")
 
 	if err != nil {
 		fmt.Printf("Error happened in JSON marshal. Err: %s \n", err)
@@ -120,7 +127,7 @@ func GetUser(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("-- Get user --")
 
 	if req.Method != http.MethodGet {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -142,19 +149,12 @@ func GetUser(w http.ResponseWriter, req *http.Request) {
 
 	u.Print()
 
-	if err != nil {
-		fmt.Printf("User with id %d not found \n", id)
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	jsonResp, err := json.Marshal(u)
-
+	jsonResp, err := json.MarshalIndent(u, "", "\t")
 	if err != nil {
 		fmt.Printf("Error happened in JSON marshal. Err: %s \n", err)
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 
 	fmt.Printf("-- write user with id %d \n--", id)
@@ -167,8 +167,7 @@ func GetAllUser(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	jsonResp, err := json.Marshal(userStorage)
-
+	jsonResp, err := json.MarshalIndent(userStorage, "", "\t")
 	if err != nil {
 		fmt.Printf("Error happened in JSON marshal. Err: %s \n", err)
 		w.WriteHeader(http.StatusNotFound)
@@ -186,6 +185,5 @@ func contains(id int) bool {
 			return true
 		}
 	}
-	fmt.Printf("no user found in storage with id %d \n", id)
 	return false
 }
