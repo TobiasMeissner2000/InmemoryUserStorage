@@ -18,8 +18,9 @@ var (
 )
 
 func main() {
-	fmt.Println("--> Starting Server")
+	fmt.Println("...Server is starting")
 	handlerequests()
+	fmt.Println("-- Server is ready --")
 }
 
 func handlerequests() {
@@ -46,12 +47,17 @@ func printReadme(w http.ResponseWriter, req *http.Request) {
 		Welcome: "Here is the readme for this small project",
 	}
 
-	t.Execute(w, items)
+	err = t.Execute(w, items)
+
+	if err != nil {
+		fmt.Printf("Failed to start tamplate with error: %s ", err)
+		return
+	}
 }
 
 func AddUser(w http.ResponseWriter, req *http.Request) {
 	fmt.Println()
-	fmt.Println("-- add user --")
+	fmt.Println("-- Add user --")
 
 	if req.Method != http.MethodPost {
 		w.WriteHeader(http.StatusNotFound)
@@ -63,7 +69,8 @@ func AddUser(w http.ResponseWriter, req *http.Request) {
 	req.Body.Close()
 	u.SetId()
 	userStorage[u.Id] = *u
-	fmt.Println(u)
+
+	u.Print()
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
@@ -77,13 +84,12 @@ func AddUser(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonResp)
 
-	fmt.Printf("-- user with id %d added --", u.GetId())
-	fmt.Println()
+	fmt.Printf("-- user with id %d added -- \n", u.Id)
 }
 
 func DeleteUser(w http.ResponseWriter, req *http.Request) {
 	fmt.Println()
-	fmt.Println("-- delete user --")
+	fmt.Println("-- Delete user --")
 
 	if req.Method != http.MethodDelete {
 		w.WriteHeader(http.StatusNotFound)
@@ -111,7 +117,7 @@ func DeleteUser(w http.ResponseWriter, req *http.Request) {
 
 func GetUser(w http.ResponseWriter, req *http.Request) {
 	fmt.Println()
-	fmt.Println("-- get user --")
+	fmt.Println("-- Get user --")
 
 	if req.Method != http.MethodGet {
 		w.WriteHeader(http.StatusNotFound)
@@ -151,12 +157,14 @@ func GetUser(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	fmt.Printf("-- write user with id %d --", id)
+	fmt.Printf("-- write user with id %d \n--", id)
 	w.Write(jsonResp)
 	return
 }
 
 func GetAllUser(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("--  Get all user --")
+
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	jsonResp, err := json.Marshal(userStorage)
@@ -178,5 +186,6 @@ func contains(id int) bool {
 			return true
 		}
 	}
+	fmt.Printf("no user found in storage with id %d \n", id)
 	return false
 }
