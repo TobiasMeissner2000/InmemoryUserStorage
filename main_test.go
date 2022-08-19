@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"test/user"
@@ -75,5 +76,23 @@ func Test_GetUser_StatusMethodNotAllowed(t *testing.T) {
 	resp := w.Result()
 	if resp.StatusCode != http.StatusMethodNotAllowed {
 		t.Fatalf("Expected %d, actual %d", http.StatusNotFound, resp.StatusCode)
+	}
+}
+
+func Test_handlerequests(t *testing.T) {
+	handlerequests()
+
+	res, err := http.Get("http://localhost:8080/getall")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(res.StatusCode)
+
+	a := res.StatusCode
+	fmt.Println(a)
+
+	if res.StatusCode != http.StatusCreated {
+		t.Fatalf("Status is %d", res.StatusCode)
 	}
 }

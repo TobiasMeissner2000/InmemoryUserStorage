@@ -21,7 +21,7 @@ var (
 func main() {
 	fmt.Println("...Start server")
 	fmt.Printf("Port : %s \n", port)
-	handlerequests()
+	handlerequests() //nach dem cal beendet sich das Pogramm. Wie kann ich das verhindern?
 }
 
 func handlerequests() {
@@ -33,7 +33,9 @@ func handlerequests() {
 
 	go func() {
 		err := http.ListenAndServe(port, nil)
-		log.Fatal(err)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}()
 }
 
