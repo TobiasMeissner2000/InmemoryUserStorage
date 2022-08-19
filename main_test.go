@@ -9,21 +9,71 @@ import (
 
 func Test_Contains(t *testing.T) {
 
-	userStorage = make(map[int]user.User)
+	tests := []struct {
+		name        string
+		userStorage map[int]user.User
+		inputID     int
+		want        bool
+	}{
+		{
+			name: "Contains",
+			userStorage: map[int]user.User{
 
-	a := contains(1)
-	if a {
-		t.Fatalf("Expected %t, actual: %t", false, a)
+				1234: {
+					Id: 1234,
+				},
+
+				1235: {
+					Id: 1235,
+				},
+			},
+			inputID: 1234,
+			want:    true,
+		},
+		{
+			name: "Does not contains",
+			userStorage: map[int]user.User{
+				1234: {
+					Id: 1234,
+				},
+				1235: {
+					Id: 1235,
+				},
+			},
+			inputID: 1236,
+			want:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			userStorage = tt.userStorage
+			got := contains(tt.inputID)
+			if got != tt.want {
+				t.Fatalf("got : %t, want : %t", got, tt.want)
+			}
+		})
 	}
 }
 
-func Test_GetUser(t *testing.T) {
+func Test_GetUser_StatusNotFound(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "http://localhost/get?id=1001", nil)
 	w := httptest.NewRecorder()
 
 	GetUser(w, req)
 	resp := w.Result()
 	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("Expected %d, actual %d", http.StatusNotFound, resp.StatusCode)
+	}
+}
+
+func Test_GetUser_StatusMethodNotAllowed(t *testing.T) {
+	req := httptest.NewRequest(http.MethodDelete, "http://localhost/get?id=1001", nil)
+	w := httptest.NewRecorder()
+
+	GetUser(w, req)
+	resp := w.Result()
+	if resp.StatusCode != http.StatusMethodNotAllowed {
 		t.Fatalf("Expected %d, actual %d", http.StatusNotFound, resp.StatusCode)
 	}
 }

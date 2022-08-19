@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 	"test/user"
@@ -30,7 +31,10 @@ func handlerequests() {
 	http.HandleFunc("/get", GetUser)
 	http.HandleFunc("/getall", GetAllUser)
 
-	http.ListenAndServe(port, nil)
+	go func() {
+		err := http.ListenAndServe(port, nil)
+		log.Fatal(err)
+	}()
 }
 
 func printReadme(w http.ResponseWriter, req *http.Request) {
@@ -132,7 +136,7 @@ func GetUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	myId := req.URL.Query().Get("id")
-	id, err := strconv.Atoi(myId)
+	id, err := strconv.Atoi(myId) //convert string to int
 	if err != nil {
 		fmt.Println("Failed with error: " + err.Error())
 		return
