@@ -8,35 +8,53 @@ import (
 	"net/http"
 	"strconv"
 	"test/user"
+	"time"
 )
 
 const (
 	port = ":8080"
 )
 
-var (
-	userStorage = make(map[int]user.User)
-)
+//struct httphandler{ userstorage }
+//handler funktionen als methoden definieren
+
+//mutex
+//unterschied methode, funtion, pseudo construktor
+//rest auf struct get, del,...
+//handling map and slices
+
+var userStore = user.NewUserStore()
 
 func main() {
 	fmt.Println("...Start server")
 	fmt.Printf("Port : %s \n", port)
-	handlerequests() //nach dem cal beendet sich das Pogramm. Wie kann ich das verhindern?
+	router := createRouter()
+	startServer(router)
 }
 
-func handlerequests() {
-	http.HandleFunc("/", printReadme)
-	http.HandleFunc("/add", AddUser)
-	http.HandleFunc("/delete", DeleteUser)
-	http.HandleFunc("/get", GetUser)
-	http.HandleFunc("/getall", GetAllUser)
+func createRouter() *http.ServeMux {
+	router := http.NewServeMux()
 
-	go func() {
-		err := http.ListenAndServe(port, nil)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
+	router.HandleFunc("/", printReadme)
+	router.HandleFunc("/add", AddUser)
+	router.HandleFunc("/delete", DeleteUser)
+	router.HandleFunc("/get", GetUser)
+	router.HandleFunc("/getall", GetAllUser)
+
+	return router
+}
+
+func startServer(serveMux *http.ServeMux) {
+	server := http.Server{
+		Addr:        port,
+		Handler:     serveMux,
+		ReadTimeout: 10 * time.Second,
+	}
+
+	err := server.ListenAndServe()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func printReadme(w http.ResponseWriter, req *http.Request) {
@@ -80,8 +98,7 @@ func AddUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	_ = req.Body.Close()
-	u.SetId()
-	userStorage[u.Id] = *u
+	userStore.Add(u)
 
 	u.Print()
 
@@ -97,7 +114,7 @@ func AddUser(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonResp)
 
-	fmt.Printf("-- user with id %d added -- \n", u.Id)
+	fmt.Printf("-- user with id %d added -- \n", u.ID)
 }
 
 func DeleteUser(w http.ResponseWriter, req *http.Request) {
@@ -116,13 +133,12 @@ func DeleteUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !contains(id) {
-		fmt.Printf("Id %d not found \n", id)
+	err = userStore.Delete(id)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(err.Error()))
 		return
 	}
-
-	delete(userStorage, id)
 	w.WriteHeader(http.StatusCreated)
 
 	fmt.Printf("-- user with id %d deleted -- \n", id)
@@ -144,14 +160,15 @@ func GetUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !contains(id) {
-		fmt.Printf("Id %d not found \n", id)
+	fmt.Printf("Id: %d \n", id)
+	u, err := userStore.Get(id)
+
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		_, _ = fmt.Fprint(w, err.Error())
+		//w.Write([]byte(err.Error()))
 		return
 	}
-
-	fmt.Printf("Id: %d \n", id)
-	u := userStorage[id]
 
 	u.Print()
 
@@ -173,7 +190,7 @@ func GetAllUser(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	jsonResp, err := json.MarshalIndent(userStorage, "", "\t")
+	jsonResp, err := json.MarshalIndent(userStore.GetAll(), "", "\t")
 	if err != nil {
 		fmt.Printf("Error happened in JSON marshal. Err: %s \n", err)
 		w.WriteHeader(http.StatusNotFound)
@@ -182,14 +199,4 @@ func GetAllUser(w http.ResponseWriter, req *http.Request) {
 	fmt.Printf("-- write users --")
 	w.Write(jsonResp)
 	return
-}
-
-func contains(id int) bool {
-
-	for key := range userStorage {
-		if key == id {
-			return true
-		}
-	}
-	return false
 }
